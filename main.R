@@ -1,0 +1,14 @@
+# main.R
+library(dplyr)
+library(stringr)
+library(readr)
+library(here)
+library(ggplot2)
+library(tidyverse)
+library(lme4)
+library(broom.mixed)
+
+source(here("src", "00_prepare_data.R"))
+source(here("src", "01_make_subsets.R"))
+source(here("src", "02_standard_plots.R"))
+source(here("src", "03_models.R"))
