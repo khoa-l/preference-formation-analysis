@@ -1,6 +1,6 @@
 #src/functions/rename_metadata_columns.R
 
-metadata_rename_map <- c(
+.metadata_rename_map <- c(
   # Qualtrics survey metadata
   "StartDate"                       = "start_date",
   "EndDate"                         = "end_date",
@@ -10,7 +10,7 @@ metadata_rename_map <- c(
   "Duration (in seconds)"           = "duration_sec",
   "Finished"                        = "finished",
   "RecordedDate"                    = "recorded_date",
-  "ResponseId"                      = "response_id",
+  "ResponseId"                      = "participant_id",
   "RecipientLastName"               = "recipient_last_name",
   "RecipientFirstName"              = "recipient_first_name",
   "RecipientEmail"                  = "recipient_email",
@@ -25,7 +25,7 @@ metadata_rename_map <- c(
   
   # Consent and choosing posts for Round 2
   "Consent Agreement"               = "consent",
-  "R2 Random Questions"             = "r2_post_selection",
+  "R2 Random Questions"             = "r2_item_selection",
   
   # Debrief / manipulation-check questions
   "Issues"                          = "detection_issue_flag",
@@ -63,10 +63,10 @@ metadata_rename_map <- c(
 
 rename_metadata_columns <- function(data) {
   current_names <- names(data)
-  matched <- current_names %in% names(metadata_rename_map)
+  matched <- current_names %in% names(.metadata_rename_map)
   
   new_names <- current_names
-  new_names[matched] <- metadata_rename_map[current_names[matched]]
+  new_names[matched] <- .metadata_rename_map[current_names[matched]]
   
   unmatched <- current_names[!matched & !current_names %in% new_names]
   # unmatched here just means "not in map" - could still be post##_* etc,

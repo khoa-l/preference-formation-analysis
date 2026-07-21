@@ -3,79 +3,92 @@
 source(here("src", "functions", "filter_subsets.R"))
 source(here("src", "functions", "plot_helpers.R"))
 
-# ---- Load main data + all saved subsets ----
-processed_dir <- here("data", "processed")
-subset_files  <- list.files(processed_dir, pattern = "\\.rds$", full.names = TRUE)
-
-datasets <- map(subset_files, read_rds) |>
-  set_names(tools::file_path_sans_ext(basename(subset_files)))
-datasets <- c(list(main = long_preferences), datasets)
-
-# ---- Per-subset plots: r1/r2 rating histograms, confidence histogram, scatter ----
+# --- set plot root ----
 
 plot_root <- here("outputs", "plots")
 
-iwalk(datasets, function(data, name) {
-  subset_dir <- file.path(plot_root, name)
-  dir.create(subset_dir, showWarnings = FALSE, recursive = TRUE)
-  
-  ggsave(file.path(subset_dir, "r1_rating_hist.png"),
-         plot_histogram(data, "r1_rating", title = paste(name, "- R1 rating")),
-         width = 6, height = 4)
-  
-  ggsave(file.path(subset_dir, "r2_rating_hist.png"),
-         plot_histogram(data, "r2_rating", title = paste(name, "- R2 rating")),
-         width = 6, height = 4)
-  
-  ggsave(file.path(subset_dir, "r1_confidence_hist.png"),
-         plot_histogram(data, "r1_confidence", title = paste(name, "- R1 confidence")),
-         width = 6, height = 4)
-  
-  ggsave(file.path(subset_dir, "magnitude_vs_change_scatter.png"),
-         plot_scatter(data, "manipulation_magnitude", "attitude_change",
-                      title = paste(name, "- manipulation magnitude vs attitude change")),
-         width = 6, height = 4)
-})
-
-# ---- Bar chart: manipulated/not-manipulated x accepted/up/down ----
+# ---- bar chart: manipulated/not_manipulated x accepted/up/down ----
 
 response_categories <- long_preferences |>
+  filter(!is.na(manipulated)) |>
   mutate(
     change_direction = case_when(
       r2_rating == rating_shown ~ "accepted",
       r2_rating > rating_shown  ~ "up",
       r2_rating < rating_shown  ~ "down",
-      TRUE                       ~ NA_character_
     ),
-    category = paste0(if_else(manipulated, "manipulated", "not_manipulated"),
-                      "_", change_direction)
+    manipulated_label = if_else(manipulated, "manipulated", "not_manipulated")
   )
 
-ggsave(file.path(plot_root, "response_category_counts.png"),
-       plot_bar(response_categories, "category", title = "Response categories"),
+ggsave(file.path(plot_root, "bar_response_category_counts.png"), 
+       plot_bar_stack(response_categories, FALSE, "manipulated_label", "change_direction", "Response Categories", "Change", "Count"), 
        width = 7, height = 4)
 
-# ---- Strandberg plots ----
+ggsave(file.path(plot_root, "bar_response_category_counts_percent.png"), 
+       plot_bar_stack(response_categories, TRUE, "manipulated_label", "change_direction", "Response Categories", "Change", "Count"), 
+       width = 7, height = 4)
 
-# Manipulated vs not manipulated: mean rating across timepoints
-ggsave(file.path(plot_root, "strandberg_manipulated.png"),
-       plot_strandberg(long_preferences, group_var = "manipulated",
-                       title = "Rating across timepoints: manipulated vs not"),
+# ---- r1/r2 ratings + confidence histograms
+.p1 <- plot_histogram(r2_posts, "r1_rating", title = "R1 Value Alignment", x_label = "Value rating")
+.p2 <- plot_histogram(r2_posts, "r2_rating", title = "R2 Value Alignment", x_label = "Value rating")
+
+y_max <- max(layer_data(.p1)$count, layer_data(.p2)$count)
+y_max_rounded <- ceiling(y_max / 20) * 20 + 20
+
+combined_plot <- (.p1 + coord_cartesian(ylim = c(0, y_max)) + scale_y_continuous(breaks = seq(0, y_max_rounded, by = 20))) +
+  (.p2 + coord_cartesian(ylim = c(0, y_max)) + scale_y_continuous(breaks = seq(0, y_max_rounded, by = 20)))
+
+ggsave(file.path(plot_root, "hist_r1r2_rating.png"),
+       combined_plot,
+       width = 10, height = 4)
+
+ggsave(file.path(plot_root, "hist_r1_rating.png"),
+       plot_histogram(r2_posts, "r1_rating", title ="R1 Value Alignment"),
        width = 6, height = 4)
 
-# Attitude change: manipulated vs not manipulated
-ggsave(file.path(plot_root, "strandberg_change_manipulated.png"),
-       plot_strandberg_change(long_preferences, group_var = "manipulated",
-                              title = "Attitude change: manipulated vs not"),
+ggsave(file.path(plot_root, "hist_r1_confidence.png"),
+       plot_histogram(r2_posts, "r1_confidence", title ="R1 Confidence"),
        width = 6, height = 4)
 
-# Within manipulated subset: accepted vs corrected
-manipulated_classified <- long_preferences |>
-  filter_manipulated(TRUE) |>
-  classify_correction() |>
-  filter(response_type != "other")
+ggsave(file.path(plot_root, "hist_r2_rating.png"),
+       plot_histogram(r2_posts, "r2_rating", title ="R2 Value Alignment"),
+       width = 6, height = 4)
 
-ggsave(file.path(plot_root, "strandberg_change_accepted_vs_corrected.png"),
-       plot_strandberg_change(manipulated_classified, group_var = "response_type",
-                              title = "Attitude change: accepted vs corrected (manipulated only)"),
+# ---- attitude change histograms ----
+
+ggsave(file.path(plot_root, "hist_attitude_change.png"),
+       plot_histogram(r2_posts, "attitude_change", title ="Attitude Change"),
+       width = 6, height = 4)
+
+ggsave(file.path(plot_root, "hist_attitude_change_signed.png"),
+       plot_histogram(r2_posts, "attitude_change_signed", title ="Attitude Change Signed"),
+       width = 6, height = 4)
+
+# ---- magnitude x attitude_change scatter plots ----
+
+ggsave(file.path(plot_root, "scatter_magnitude_x_attitude_change.png"),
+       plot_scatter(r2_posts, "manipulation_magnitude", "attitude_change",
+                    title = "Manipulation Magnitude x Attitude Change"),
+       width = 6, height = 4)
+
+ggsave(file.path(plot_root, "scatter_magnitude_x_attitude_change_signed.png"),
+       plot_scatter(r2_posts, "manipulation_magnitude", "attitude_change_signed",
+                    title = "Manipulation Magnitude x Attitude Change Signed"),
+       width = 6, height = 4)
+
+# ---- r1 confidence x rating/attitude_change scatter plots ----
+
+ggsave(file.path(plot_root, "scatter_r1_confidence_x_rating.png"),
+       plot_scatter(r2_posts, "r1_confidence", "r1_rating",
+                    title = "R1 Confidence x R1 Value Alignment"),
+       width = 6, height = 4)
+
+ggsave(file.path(plot_root, "scatter_r1_confidence_x_attitude_change.png"),
+       plot_scatter(r2_posts, "r1_confidence", "attitude_change",
+                    title = "R1 Confidence x Attitude Change"),
+       width = 6, height = 4)
+
+ggsave(file.path(plot_root, "scatter_r1_confidence_x_attitude_change_signed.png"),
+       plot_scatter(r2_posts, "r1_confidence", "attitude_change_signed",
+                    title = "R1 Confidence x Attitude Change Signed"),
        width = 6, height = 4)

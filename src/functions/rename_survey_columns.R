@@ -2,7 +2,7 @@
 
 rename_survey_column <- function(col) {
   
-  # Round 1 (R1) post 13 is an attention check special case
+  # Round 1 (R1) question 13 is an attention check special case
   if (str_detect(col, "^13_R1")) {
     measure <- case_when(
       str_detect(col, "Value Alignment")   ~ "rating",
@@ -17,7 +17,7 @@ rename_survey_column <- function(col) {
     return(sprintf("attn_check_r1_%s", measure))
   }
   
-  # R1/R2 item columns -> r1_post##_value, r2_post##_confidence, etc.
+  # R1/R2 item columns -> r1_item##_value, r2_item##_confidence, etc.
   if (str_detect(col, "^\\d+_R[12]")) {
     round <- ifelse(str_detect(col, "_R1"), "r1", "r2")
     n     <- as.integer(str_extract(col, "^\\d+"))
@@ -35,19 +35,24 @@ rename_survey_column <- function(col) {
     )
     if (is.na(measure)) return(col)
     
-    return(sprintf("%s_post%02d_%s", round, n, measure))
+    return(sprintf("%s_item%02d_%s", round, n, measure))
   }
   
-  # Post metadata columns -> post##_id, post##_choice, post##_shown_choice
-  post_type <- case_when(
-    str_detect(col, "^PostID\\d+$")              ~ "id",
-    str_detect(col, "^__js_Post\\d+ShownChoice") ~ "rating_shown", # The value that is shown to the participant in Round 2, may be manipulated
+  # Question metadata columns -> post##_id, post##_choice, post##_shown_choice
+  .question_type <- case_when(
+    str_detect(col, "^__js_Post\\d+ShownChoice")  ~ "rating_shown", # The value that is shown to the participant in Round 2, may be manipulated
     str_detect(col, "^__js_Post\\d+Choice$")      ~ "rating_original", # The value that the participant originally rated in Round 1
     TRUE ~ NA_character_
   )
-  if (!is.na(post_type)) {
+  
+  if (!is.na(.question_type)) {
     n <- as.integer(str_extract(col, "\\d+"))
-    return(sprintf("post%02d_%s", n, post_type))
+    return(sprintf("item%02d_%s", n, .question_type))
+  }
+  
+  if (str_detect(col, "^PostID\\d+$")) {
+      n <- as.integer(str_extract(col, "\\d+"))
+      return(sprintf("item%02d_%s", n, "post_id")) 
   }
   
   col  # unchanged if no pattern matches

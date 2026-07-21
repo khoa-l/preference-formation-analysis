@@ -1,3 +1,4 @@
+# src/functions/model_helpers.R
 
 # Post-centered deviation columns
 add_deviation_columns <- function(data) {
@@ -36,26 +37,7 @@ fit_lm_by_post <- function(data) {
     set_names(unique(data$post_num))
 }
 
-# Neat text summary report for any fitted model
-report_model <- function(model, name = "model") {
-  cat("====", name, "====\n")
-  print(summary(model))
-  cat("\n")
-}
-
 # Tidy coefficient table (works for lmer, glmer, and lm)
 get_coefficients <- function(model) {
   broom.mixed::tidy(model, effects = "fixed", conf.int = TRUE)
-}
-
-# Forest plot of fixed-effect coefficients
-plot_forest <- function(coef_table, title = NULL) {
-  coef_table |>
-    filter(term != "(Intercept)") |>
-    ggplot(aes(x = estimate, y = term)) +
-    geom_point() +
-    geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0.2) +
-    geom_vline(xintercept = 0, linetype = "dashed") +
-    labs(title = title %||% "Model coefficients", x = "Estimate", y = NULL) +
-    theme_minimal()
 }

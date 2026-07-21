@@ -19,8 +19,8 @@ filter_manipulation_direction <- function(data, direction, tolerance = 0) filter
 
 # ---- Manipulation status & magnitude ----
 
-filter_manipulated <- function(data, manipulated = TRUE) {
-  data |> filter(.data$manipulated == manipulated)
+filter_manipulated <- function(data, was_manipulated = TRUE) {
+  data %>% filter(manipulated == was_manipulated)
 }
 
 filter_manipulation_magnitude <- function(data, min = 0, max = Inf) {
@@ -36,7 +36,7 @@ filter_manipulation_magnitude_signed <- function(data, min = -Inf, max = Inf) {
 # ---- Post selection ----
 
 filter_by_posts <- function(data, posts) {
-  data |> filter(post_num %in% posts)
+  data |> filter(post_id %in% posts)
 }
 
 # ---- Detection (debrief measures) ----
@@ -53,7 +53,7 @@ filter_hypothetical_awareness <- function(data, aware = "Yes") {
   data |> filter(detection_hypothetical == aware)
 }
 
-# ---- Explanation given ------------------------------------------------
+# ---- Explanation given ----
 
 filter_by_explanation_given <- function(data, given = TRUE) {
   if (given) {
