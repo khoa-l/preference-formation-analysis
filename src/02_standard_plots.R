@@ -1,21 +1,22 @@
 #src/02_standard_plots.R
 
 source(here("src", "functions", "filter_subsets.R"))
-source(here("src", "functions", "plot_helpers.R"))
+source(here("src", "functions", "standard_plot_helpers.R"))
 
 # --- set plot root ----
 
 plot_root <- here("outputs", "plots")
 
-# ---- bar chart: manipulated/not_manipulated x accepted/up/down ----
+# ---- bar chart: manipulated/not_manipulated x accepted/up/down (from rating_shown) ----
 
-response_categories <- long_preferences |>
+# Not representative of attitude_change/r1_rating, just a comparison with what they were shown
+response_categories <- r2_posts |>
   filter(!is.na(manipulated)) |>
   mutate(
     change_direction = case_when(
-      r2_rating == rating_shown ~ "accepted",
-      r2_rating > rating_shown  ~ "up",
-      r2_rating < rating_shown  ~ "down",
+      r2_rating == rating_shown ~ "r2 == shown",
+      r2_rating > rating_shown  ~ "r2 > shown",
+      r2_rating < rating_shown  ~ "r2 < shown",
     ),
     manipulated_label = if_else(manipulated, "manipulated", "not_manipulated")
   )
@@ -27,6 +28,30 @@ ggsave(file.path(plot_root, "bar_response_category_counts.png"),
 ggsave(file.path(plot_root, "bar_response_category_counts_percent.png"), 
        plot_bar_stack(response_categories, TRUE, "manipulated_label", "change_direction", "Response Categories", "Change", "Count"), 
        width = 7, height = 4)
+
+
+# ---- bar chart: manipulated/not_manipulated x accepted/up/down (from r1_rating) ----
+
+# Not representative of attitude_change/r1_rating, just a comparison with what they were shown
+response_categories <- r2_posts |>
+  filter(!is.na(manipulated)) |>
+  mutate(
+    change_direction = case_when(
+      r2_rating == r1_rating ~ "r2 == r1",
+      r2_rating > r1_rating  ~ "r2 > r1",
+      r2_rating < r1_rating  ~ "r2 < r1",
+    ),
+    manipulated_label = if_else(manipulated, "manipulated", "not_manipulated")
+  )
+
+ggsave(file.path(plot_root, "bar_r1r2_response_category_counts.png"), 
+       plot_bar_stack(response_categories, FALSE, "manipulated_label", "change_direction", "Response Categories", "Change", "Count"), 
+       width = 7, height = 4)
+
+ggsave(file.path(plot_root, "bar_r1r2_response_category_counts_percent.png"), 
+       plot_bar_stack(response_categories, TRUE, "manipulated_label", "change_direction", "Response Categories", "Change", "Count"), 
+       width = 7, height = 4)
+
 
 # ---- r1/r2 ratings + confidence histograms
 .p1 <- plot_histogram(r2_posts, "r1_rating", title = "R1 Value Alignment", x_label = "Value rating")

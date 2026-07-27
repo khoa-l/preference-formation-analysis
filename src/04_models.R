@@ -1,7 +1,9 @@
+#src/04_models.R
 
 source(here("src", "functions", "model_helpers.R"))
+source(here("src", "functions", "model_plot_helpers.R"))
 
-model_data <- long_preferences |> add_deviation_columns()
+model_data <- rbind(manip_change_up_shown, manip_change_down_shown) |> add_deviation_columns() |> scale_predictors()
 
 # ---- Main mixed models ----
 
@@ -18,8 +20,8 @@ glmer_coefs <- get_coefficients(glmer_model)
 
 lm_by_post <- fit_lm_by_post(model_data)
 
-lm_by_post_coefs <- imap_dfr(lm_by_post, function(model, post_num) {
-  broom::tidy(model, conf.int = TRUE) |> mutate(post_num = post_num, .before = 1)
+lm_by_post_coefs <- imap_dfr(lm_by_post, function(model, item_num) {
+  broom::tidy(model, conf.int = TRUE) |> mutate(item_num = item_num, .before = 1)
 })
 
 # ---- Save outputs ----
@@ -48,7 +50,7 @@ ggsave(file.path(output_dir, "resid_fitted_glmer.png"), plot_residuals_fitted(gl
 
 # ---- Per-post coefficients from the mixed model itself (fixed + random intercept) ----
 
-lmer_coefs_by_post <- coef(lmer_model)$post_num |>
-  rownames_to_column("post_num")
+lmer_coefs_by_post <- coef(lmer_model)$item_num |>
+  rownames_to_column("item_num")
 
 write_csv(lmer_coefs_by_post, file.path(output_dir, "lmer_coefficients_by_post.csv"))

@@ -1,7 +1,7 @@
 #src/03_subset_manipulated_plots.R
 
 source(here("src", "functions", "filter_subsets.R"))
-source(here("src", "functions", "plot_helpers.R"))
+source(here("src", "functions", "standard_plot_helpers.R"))
 
 # ---- load main data + all saved subsets ----
 subset_data_dir <- here("data", "processed", "subsets")
@@ -18,3 +18,6 @@ subset_plots_dir <- here(plot_root, "subsets")
 
 # ---- manipulated plots ----
 source(here("src", "subset_plots", "03a_manipulated_plots.R"))
+source(here("src", "subset_plots", "03b_manip_no_change.R"))
+source(here("src", "subset_plots", "03c_manip_change_up.R"))
+source(here("src", "subset_plots", "03d_manip_change_down.R"))

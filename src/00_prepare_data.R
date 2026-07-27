@@ -52,6 +52,7 @@ long_preferences <- mutate(long_preferences,
   r1_confidence_deviation = abs(r1_confidence - 50),
   manipulated = r1_rating != rating_shown,
   manipulation_magnitude = abs(rating_shown - r1_rating),
+  manipulation_magnitude_signed = rating_shown - r1_rating,
   attitude_change = abs(r2_rating - r1_rating),
   attitude_change_signed = r2_rating - r1_rating
 )
